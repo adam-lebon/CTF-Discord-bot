@@ -64,3 +64,5 @@ client.on('ready', async () => {
 });
 
 client.login(CONFIG.token);
+
+process.on('SIGINT', () => process.exit());
