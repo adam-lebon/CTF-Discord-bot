@@ -1,1 +1,0 @@
-{"version":3,"file":"TeamAlreadyAssigned.error.js","sourceRoot":"","sources":["../../src/errors/TeamAlreadyAssigned.error.ts"],"names":[],"mappings":";;;AAEA,MAAa,wBAAyB,SAAQ,KAAK;IAC/C,YAAY,MAAmB,EAAE,QAAgB;QAC7C,KAAK,CAAC,IAAI,MAAM,CAAC,WAAW,+BAA+B,QAAQ,GAAG,CAAC,CAAC;IAC5E,CAAC;CACJ;AAJD,4DAIC"}

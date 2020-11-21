@@ -1,6 +1,7 @@
 import type { Guild, GuildMember, Role } from "discord.js";
 import { CONFIG } from "./config";
 import { TeamAlreadyAssignedError } from "./errors/TeamAlreadyAssigned.error";
+import { logger } from "./logger";
 
 /**
  * Create role and assign this role to members
@@ -20,6 +21,7 @@ export const assignUsersToTeam = async (guild: Guild, teamName: string, members:
             throw new TeamAlreadyAssignedError(member, teamName);
         }
         
+        logger.debug(`Adding role "${teamRole.name}" to user @${member.displayName}`)
         return member.roles.add([
             flagerzRole,
             teamRole

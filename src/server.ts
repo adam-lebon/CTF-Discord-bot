@@ -3,10 +3,10 @@ import { Logger } from "tslog";
 
 import { CONFIG } from "./config";
 import { TeamAlreadyAssignedError } from "./errors/TeamAlreadyAssigned.error";
+import { logger } from "./logger";
 import { assignUsersToTeam, createChannels } from "./utils";
 
 /** Configuration */
-const logger = new Logger();
 const client = new Client();
 
 /** Event listeners */
@@ -16,8 +16,8 @@ client.on('ready', async () => {
     client.on('message', async (message) => {
         try {
             if (message.member?.roles.cache.find(role => role.name === CONFIG.adminRole)) {
-                logger.debug(message.content);
                 const matchResult = (message.content.match(/^\/assign "?([^<"]+)"? ((<@\d+>)+\s?)+/))?.slice(1);
+
                 if (matchResult) {
                     const [ teamName ] = matchResult;
                     const members = message.mentions.members?.array();
