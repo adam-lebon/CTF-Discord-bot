@@ -37,8 +37,15 @@ export const assignUsersToTeam = async (guild: Guild, teamName: string, members:
 export const createChannels = async (guild: Guild, teamRole: Role) => {
     const category = guild.channels.cache.find(chan => chan.name === 'TEAM' && chan.type === 'category')
         ?? await guild.channels.create('TEAM', {
-            type: 'category',
-            permissionOverwrites: [
+            type: 'category'
+        });
+
+    if (!guild.channels.cache.find(chan =>
+        chan.type === 'text'
+        && chan.name === teamRole.name.toLowerCase()
+        && chan.parentID === category.id
+    )) {
+        await guild.channels.create(teamRole.name, { type: 'text', parent: category, permissionOverwrites: [
                 {
                     id: guild.roles.everyone,
                     deny: ['VIEW_CHANNEL']
@@ -52,18 +59,9 @@ export const createChannels = async (guild: Guild, teamRole: Role) => {
                     'EMBED_LINKS',
                     'READ_MESSAGE_HISTORY',
                     'ATTACH_FILES',
-                    'CONNECT',
-                    'STREAM'
                 ]
             }]
         });
-
-    if (!guild.channels.cache.find(chan =>
-        chan.type === 'text'
-        && chan.name === teamRole.name.toLowerCase()
-        && chan.parentID === category.id
-    )) {
-        await guild.channels.create(teamRole.name, { type: 'text', parent: category });
     }
 
     if (!guild.channels.cache.find(chan =>
@@ -71,6 +69,41 @@ export const createChannels = async (guild: Guild, teamRole: Role) => {
         && chan.name === teamRole.name
         && chan.parentID === category.id
     )) {
-        await guild.channels.create(teamRole.name, { type: 'voice', parent: category });
+        await guild.channels.create(teamRole.name, { type: 'voice', parent: category, permissionOverwrites: [
+                {
+                    id: guild.roles.everyone,
+                    deny: ['VIEW_CHANNEL']
+                },
+                {
+                id: teamRole,
+                allow: [
+                    'VIEW_CHANNEL',
+                    'CONNECT',
+                    'STREAM'
+                ]
+            }]
+        });
+    }
+};
+
+export const deleteChans = async (guild: Guild) => {
+    const category = guild.channels.cache.find(chan => chan.name === 'TEAM' && chan.type === 'category');
+
+    if (category) {
+        logger.debug('Parent channel is', category.name);
+        const toDelete = guild.channels.cache.filter(channel => channel.parentID === category.id).array();
+
+        logger.info('The following channels will be deleted', toDelete.map(chan => chan.name));
+        await new Promise(resolve => setTimeout(resolve, 20e3));
+
+        for (const channel of toDelete) {
+            logger.debug('Deleting channel', channel.name);
+            await channel.delete()
+        }
+
+        // await Promise.all(toDelete.map(channel => channel.delete()));
+
+    } else {
+        logger.error('Unable to find parent category');
     }
 };

@@ -4,7 +4,7 @@ import { Logger } from "tslog";
 import { CONFIG } from "./config";
 import { TeamAlreadyAssignedError } from "./errors/TeamAlreadyAssigned.error";
 import { logger } from "./logger";
-import { assignUsersToTeam, createChannels } from "./utils";
+import { assignUsersToTeam, createChannels, deleteChans } from "./utils";
 
 /** Configuration */
 const client = new Client();
@@ -42,6 +42,11 @@ client.on('ready', async () => {
                             logger.info('Channels creation for team', teamRole.name);
                             await createChannels(message.guild, teamRole);
                         }
+                    }
+
+                } else if (message.content.match(/^\/deleteChans$/)) {
+                    if (message.guild) {
+                        await deleteChans(message.guild);
                     }
 
                 } else {
