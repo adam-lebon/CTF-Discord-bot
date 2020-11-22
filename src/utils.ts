@@ -30,11 +30,11 @@ export const assignUsersToTeam = async (guild: Guild, teamName: string, members:
 
     // Channels creation
     if (CONFIG.createChannels) {
-        createChannels(guild, teamRole)
+        await createChannels(guild, teamRole, true);
     }
 };
 
-export const createChannels = async (guild: Guild, teamRole: Role) => {
+export const createChannels = async (guild: Guild, teamRole: Role, wave = false) => {
     const category = guild.channels.cache.find(chan => chan.name === 'TEAM' && chan.type === 'category')
         ?? await guild.channels.create('TEAM', {
             type: 'category'
@@ -45,7 +45,7 @@ export const createChannels = async (guild: Guild, teamRole: Role) => {
         && chan.name === teamRole.name.toLowerCase()
         && chan.parentID === category.id
     )) {
-        await guild.channels.create(teamRole.name, { type: 'text', parent: category, permissionOverwrites: [
+        const textChannel = await guild.channels.create(teamRole.name, { type: 'text', parent: category, permissionOverwrites: [
                 {
                     id: guild.roles.everyone,
                     deny: ['VIEW_CHANNEL']
@@ -62,6 +62,10 @@ export const createChannels = async (guild: Guild, teamRole: Role) => {
                 ]
             }]
         });
+
+        if (wave) {
+            await textChannel.send('👋');
+        }
     }
 
     if (!guild.channels.cache.find(chan =>
