@@ -15,8 +15,9 @@ client.on('ready', async () => {
 
     client.on('message', async (message) => {
         try {
+            
             if (message.member?.roles.cache.find(role => role.name === CONFIG.adminRole)) {
-                const matchResult = (message.content.match(/^\/assign "?([^<"]+)"? ((<@\d+>)+\s?)+/))?.slice(1);
+                const matchResult = (message.content.match(/^\/assign "?([^<"]+)"? ((<@[!\d]+>)+\s?)+/))?.slice(1);
 
                 if (matchResult) {
                     const [ teamName ] = matchResult;
@@ -49,6 +50,11 @@ client.on('ready', async () => {
                         await deleteChans(message.guild);
                     }
 
+                } else if (message.content.match(/^\/boc/)) {
+                    const reply = await message.channel.send(['bite', 'couille'][Math.floor(Math.random() * 2)]);
+                    setTimeout(() => {
+                        reply.delete()
+                    }, 5e3);
                 } else {
                     return;
                 }

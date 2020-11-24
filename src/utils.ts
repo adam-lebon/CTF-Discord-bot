@@ -3,6 +3,12 @@ import { CONFIG } from "./config";
 import { TeamAlreadyAssignedError } from "./errors/TeamAlreadyAssigned.error";
 import { logger } from "./logger";
 
+const sanitizeTextChan = (name: string) => name.toLowerCase()
+    .replace(/@/g, 'a')
+    .replace(/[&<>\.\/\s'::\[\]]/g, '-')
+    .replace(/-+/g, '-')
+    .match(/^-*(.+)(?<!-)-*$/)![1];
+
 /**
  * Create role and assign this role to members
  * @param guild 
@@ -35,58 +41,74 @@ export const assignUsersToTeam = async (guild: Guild, teamName: string, members:
 };
 
 export const createChannels = async (guild: Guild, teamRole: Role, wave = false) => {
-    const category = guild.channels.cache.find(chan => chan.name === 'TEAM' && chan.type === 'category')
-        ?? await guild.channels.create('TEAM', {
-            type: 'category'
-        });
+    const existingCategory = guild.channels.cache.find(chan => chan.name === teamRole.name.toUpperCase() && chan.type === 'category');
 
-    if (!guild.channels.cache.find(chan =>
-        chan.type === 'text'
-        && chan.name === teamRole.name.toLowerCase()
-        && chan.parentID === category.id
-    )) {
-        const textChannel = await guild.channels.create(teamRole.name, { type: 'text', parent: category, permissionOverwrites: [
-                {
-                    id: guild.roles.everyone,
-                    deny: ['VIEW_CHANNEL']
-                },
-                {
-                id: teamRole,
-                allow: [
-                    'SEND_MESSAGES',
-                    'VIEW_CHANNEL',
-                    'USE_EXTERNAL_EMOJIS',
-                    'EMBED_LINKS',
-                    'READ_MESSAGE_HISTORY',
-                    'ATTACH_FILES',
-                ]
-            }]
+    let category;
+    if (!existingCategory) {
+        logger.warn('Creating category', teamRole.name.toUpperCase());
+        category = await guild.channels.create(teamRole.name.toUpperCase(), {
+            type: 'category',
         });
+    } else {
+        category = existingCategory;
+    }
+
+    await category.overwritePermissions([
+        {
+            id: guild.roles.everyone,
+            deny: ['VIEW_CHANNEL']
+        },
+        {
+        id: teamRole,
+        allow: [
+            'SEND_MESSAGES',
+            'ADD_REACTIONS',
+            'VIEW_CHANNEL',
+            'USE_EXTERNAL_EMOJIS',
+            'EMBED_LINKS',
+            'READ_MESSAGE_HISTORY',
+            'ATTACH_FILES',
+
+            'VIEW_CHANNEL',
+            'CONNECT',
+            'SPEAK',
+            'STREAM'
+        ]
+    }]);
+
+    const textChanName = sanitizeTextChan(teamRole.name);
+    const textChannel = guild.channels.cache.find(chan =>{
+        debugger;
+        return chan.type === 'text'
+        && chan.name === textChanName
+    });
+    if (textChannel) {
+        if (textChannel.parentID !== category.id) {
+            await textChannel.setParent(category.id);
+        }
+        await textChannel.lockPermissions();
+
+    } else {
+        logger.warn('Creating text channel', textChanName)
+        const textChannel = await guild.channels.create(teamRole.name, { type: 'text', parent: category });
 
         if (wave) {
             await textChannel.send('👋');
         }
     }
 
-    if (!guild.channels.cache.find(chan =>
+    const voiceChannel = guild.channels.cache.find(chan =>
         chan.type === 'voice'
         && chan.name === teamRole.name
-        && chan.parentID === category.id
-    )) {
-        await guild.channels.create(teamRole.name, { type: 'voice', parent: category, permissionOverwrites: [
-                {
-                    id: guild.roles.everyone,
-                    deny: ['VIEW_CHANNEL']
-                },
-                {
-                id: teamRole,
-                allow: [
-                    'VIEW_CHANNEL',
-                    'CONNECT',
-                    'STREAM'
-                ]
-            }]
-        });
+    );
+    if (voiceChannel) {
+        if (voiceChannel.parentID !== category.id) {
+            await voiceChannel.setParent(category.id);
+        }
+        await voiceChannel.lockPermissions();
+    } else {
+        logger.warn('Creating voice channel', teamRole.name)
+        await guild.channels.create(teamRole.name, { type: 'voice', parent: category });
     }
 };
 
