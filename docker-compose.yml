@@ -1,0 +1,13 @@
+version: '3.7'
+services:
+    ctf_bot:
+        image: registry.fakenews.sh/labrosseadam/ctf-discord-bot:latest
+        container_name: ctf-bot
+        restart: unless-stopped
+        environment:
+            DISCORD_TOKEN: ___
+            ADMIN_ROLE: admin
+            PLAYER_ROLE: flagerz
+            CREATE_CHANNELS: "false"
+            MAX_TEAM_SIZE: 4
+        # Or use: env_file: ./.env

@@ -1,7 +1,8 @@
 import { GuildMember } from "discord.js";
+import { UserFriendlyError } from "./UserFriendlyError.class";
 
-export class TeamAlreadyAssignedError extends Error {
-    constructor(member: GuildMember, teamName: string) {
-        super(`@${member.displayName} is already assign to team "${teamName}"`);
+export class TeamAlreadyAssignedError extends UserFriendlyError {
+    constructor(member: GuildMember) {
+        super(`@${member.displayName} is already assigned to another team`);
     }
 }
